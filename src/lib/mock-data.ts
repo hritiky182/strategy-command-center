@@ -21,7 +21,7 @@ function rnd(seed: number) {
   const x = Math.sin(seed * 9973.13) * 10000;
   return x - Math.floor(x);
 }
-const pick = <T,>(arr: T[], seed: number) => arr[Math.floor(rnd(seed) * arr.length)];
+const pick = <T,>(arr: T[], seed: number): T => arr[Math.floor(rnd(seed) * arr.length)]!;
 const between = (min: number, max: number, seed: number) =>
   Math.round(min + rnd(seed) * (max - min));
 
@@ -145,11 +145,11 @@ export const objectives: Objective[] = objectiveSeeds.map(([pillarId, name, depa
     id: `OBJ-${String(i + 1).padStart(2, "0")}`,
     code: `OBJ-${String(i + 1).padStart(2, "0")}`,
     name,
-    description: `${name}. Cascaded from ${pillars.find((p) => p.id === pillarId)!.name} and measured through weighted KPIs reported by the owning department.`,
+    description: `${name}. Cascaded from ${pillars.find((p) => p.id === pillarId)?.name ?? "National Strategy"} and measured through weighted KPIs reported by the owning department.`,
     pillarId,
     owner: pick(PEOPLE, i + 11),
     department,
-    weight: [10, 8, 12, 9, 7, 11, 6, 9, 8, 7, 6, 7][i],
+    weight: [10, 8, 12, 9, 7, 11, 6, 9, 8, 7, 6, 7][i]!,
     performance,
     status: performance >= 85 ? "on-track" : performance >= 70 ? "at-risk" : "off-track",
     startDate: "2026-01-01",
@@ -218,14 +218,14 @@ export const kpis: Kpi[] = kpiSeeds.map(([objectiveId, name, unit, dataSource], 
     objectiveId,
     owner: pick(PEOPLE, i + 7),
     department: obj.department,
-    sector: SECTORS[i % SECTORS.length],
+    sector: SECTORS[i % SECTORS.length]!,
     dataSource,
-    frequency: (["monthly", "quarterly", "quarterly", "annual"] as const)[i % 4],
+    frequency: (["monthly", "quarterly", "quarterly", "annual"] as const)[i % 4]!,
     unit,
     baseline,
     target,
     actual: i === 23 ? 0 : actual,
-    weight: [5, 4, 6, 3, 5, 4][i % 6],
+    weight: [5, 4, 6, 3, 5, 4][i % 6]!,
     polarity: name.includes("time") || name.includes("rate of") || name.includes("variance") ? "decrease" : "increase",
     status: i === 23 ? "not-reported" : status,
     trend: PERIODS.map((period, p) => ({
@@ -258,7 +258,7 @@ export const initiatives: Initiative[] = initiativeSeeds.map(([objectiveId, name
   return {
     id: `INI-${String(i + 1).padStart(2, "0")}`,
     code: `INI-${String(i + 1).padStart(2, "0")}`,
-    name,
+    name: name!,
     description: `${name} consolidates the projects, policy changes and capability build required to deliver "${obj.name}".`,
     objectiveId,
     owner: pick(PEOPLE, i + 2),
@@ -276,10 +276,10 @@ export const initiatives: Initiative[] = initiativeSeeds.map(([objectiveId, name
         "Design & governance approval",
         "Delivery wave rollout",
         "Benefits realisation review",
-      ][a],
+      ][a]!,
       owner: pick(PEOPLE, i + a + 13),
       progress: Math.max(0, Math.min(100, progress + (a - 1) * 15)),
-      due: ["2026-03-31", "2026-06-30", "2026-11-30", "2027-03-31"][a],
+      due: ["2026-03-31", "2026-06-30", "2026-11-30", "2027-03-31"][a]!,
     })),
     history: [
       { date: "2026-01-20", actor: "Strategy Committee", action: "Initiative chartered and funded" },
@@ -302,9 +302,9 @@ export const portfolios: Portfolio[] = [
   return {
     id: `PF-0${i + 1}`,
     code: `PF-0${i + 1}`,
-    name,
-    manager: PEOPLE[i],
-    sector,
+    name: name!,
+    manager: PEOPLE[i]!,
+    sector: sector!,
     budget,
     plannedCost: Math.round(budget * 0.82),
     actualCost,
@@ -366,7 +366,7 @@ export const projects: Project[] = projectSeeds.map(([portfolioId, initiativeId,
     code: `PRJ-${String(i + 1).padStart(3, "0")}`,
     name,
     description: `${name} delivers a core component of the ${ini.name} and is governed under the ${portfolios.find((p) => p.id === portfolioId)!.name}.`,
-    type: (["digital", "infrastructure", "capital", "operational", "policy"] as const)[i % 5],
+    type: (["digital", "infrastructure", "capital", "operational", "policy"] as const)[i % 5]!,
     portfolioId,
     initiativeId,
     manager: pick(PEOPLE, i + 12),
@@ -383,13 +383,13 @@ export const projects: Project[] = projectSeeds.map(([portfolioId, initiativeId,
     tasks: TASK_NAMES.map((t, k) => ({
       id: `TSK-${i + 1}-${k + 1}`,
       name: t,
-      phaseId: phases[Math.min(3, Math.floor(k / 3))].id,
+      phaseId: phases[Math.min(3, Math.floor(k / 3))]!.id,
       owner: pick(PEOPLE, i + k + 3),
       start: `2026-${String(Math.min(12, startMonth + k)).padStart(2, "0")}-05`,
       end: `2026-${String(Math.min(12, startMonth + k + 1)).padStart(2, "0")}-25`,
       progress: Math.max(0, Math.min(100, progress + (4 - k) * 12)),
       status: progress + (4 - k) * 12 >= 100 ? "completed" : k > 5 ? "planned" : "on-track",
-      dependsOn: k > 0 ? `TSK-${i + 1}-${k}` : undefined,
+      ...(k > 0 ? { dependsOn: `TSK-${i + 1}-${k}` } : {}),
     })),
     milestones: [
       "Governance baseline approved",
@@ -409,7 +409,7 @@ export const projects: Project[] = projectSeeds.map(([portfolioId, initiativeId,
         id: `DLV-${i + 1}-${k + 1}`,
         name: d,
         due: `2026-${String(Math.min(12, startMonth + 3 + k * 2)).padStart(2, "0")}-20`,
-        status: (["approved", "under-review", "draft"] as const)[k],
+        status: (["approved", "under-review", "draft"] as const)[k]!,
         owner: pick(PEOPLE, i + k + 2),
       }),
     ),
@@ -446,7 +446,7 @@ export const projects: Project[] = projectSeeds.map(([portfolioId, initiativeId,
 const RISK_CATEGORIES = ["Delivery", "Financial", "Technical", "Regulatory", "Resource", "Vendor", "Cyber"];
 
 export const risks: Risk[] = Array.from({ length: 22 }, (_, i) => {
-  const project = projects[i % projects.length];
+  const project = projects[i % projects.length]!;
   const probability = between(1, 5, i + 141);
   const impact = between(1, 5, i + 151);
   const titles = [
@@ -465,10 +465,10 @@ export const risks: Risk[] = Array.from({ length: 22 }, (_, i) => {
   return {
     id: `RSK-${String(i + 1).padStart(3, "0")}`,
     code: `RSK-${String(i + 1).padStart(3, "0")}`,
-    title: titles[i % titles.length],
+    title: titles[i % titles.length]!,
     entity: i % 4 === 0 ? "Initiative" : "Project",
-    entityId: i % 4 === 0 ? initiatives[i % initiatives.length].id : project.id,
-    category: RISK_CATEGORIES[i % RISK_CATEGORIES.length],
+    entityId: i % 4 === 0 ? initiatives[i % initiatives.length]!.id : project.id,
+    category: RISK_CATEGORIES[i % RISK_CATEGORIES.length]!,
     probability,
     impact,
     owner: pick(PEOPLE, i + 15),
@@ -490,20 +490,20 @@ export const issues: Issue[] = Array.from({ length: 14 }, (_, i) => ({
     "Permit issuance delayed by third party",
     "Training attendance below required threshold",
     "Network latency impacting pilot users",
-  ][i % 7],
-  projectId: projects[i % projects.length].id,
-  priority: (["critical", "high", "medium", "low"] as const)[i % 4],
+  ][i % 7]!,
+  projectId: projects[i % projects.length]!.id,
+  priority: (["critical", "high", "medium", "low"] as const)[i % 4]!,
   owner: pick(PEOPLE, i + 18),
   dueDate: `2026-${String((i % 11) + 2).padStart(2, "0")}-18`,
-  status: (["open", "in-progress", "resolved", "escalated"] as const)[i % 4],
+  status: (["open", "in-progress", "resolved", "escalated"] as const)[i % 4]!,
   resolution:
     i % 4 === 2 ? "Resolved with vendor patch and revalidated in regression cycle." : "Pending action owner update.",
 }));
 
 export const stakeholders: Stakeholder[] = Array.from({ length: 16 }, (_, i) => ({
   id: `STK-${String(i + 1).padStart(3, "0")}`,
-  name: PEOPLE[i % PEOPLE.length],
-  department: DEPARTMENTS[i % DEPARTMENTS.length],
+  name: PEOPLE[i % PEOPLE.length]!,
+  department: DEPARTMENTS[i % DEPARTMENTS.length]!,
   role: [
     "Undersecretary",
     "Director General",
@@ -511,16 +511,16 @@ export const stakeholders: Stakeholder[] = Array.from({ length: 16 }, (_, i) => 
     "Department Director",
     "Regulatory Liaison",
     "Delivery Partner Lead",
-  ][i % 6],
+  ][i % 6]!,
   influence: between(2, 5, i + 161),
   interest: between(1, 5, i + 171),
-  engagement: (["champion", "supportive", "neutral", "resistant"] as const)[i % 4],
+  engagement: (["champion", "supportive", "neutral", "resistant"] as const)[i % 4]!,
   owner: pick(PEOPLE, i + 19),
-  frequency: ["Weekly", "Bi-weekly", "Monthly", "Quarterly"][i % 4],
+  frequency: ["Weekly", "Bi-weekly", "Monthly", "Quarterly"][i % 4]!,
 }));
 
 export const correctiveActions: CorrectiveAction[] = Array.from({ length: 10 }, (_, i) => {
-  const kpi = kpis.filter((k) => k.status !== "on-track")[i % Math.max(1, kpis.filter((k) => k.status !== "on-track").length)] ?? kpis[i];
+  const kpi = (kpis.filter((k) => k.status !== "on-track")[i % Math.max(1, kpis.filter((k) => k.status !== "on-track").length)] ?? kpis[0])!;
   return {
     id: `CA-${String(i + 1).padStart(3, "0")}`,
     code: `CA-${String(i + 1).padStart(3, "0")}`,
@@ -528,7 +528,7 @@ export const correctiveActions: CorrectiveAction[] = Array.from({ length: 10 }, 
     description: `Recovery plan for ${kpi.name}: revise data collection cadence, reallocate delivery capacity and re-forecast the remaining periods.`,
     owner: kpi.owner,
     dueDate: `2026-${String((i % 10) + 3).padStart(2, "0")}-30`,
-    status: (["open", "in-progress", "completed", "overdue"] as const)[i % 4],
+    status: (["open", "in-progress", "completed", "overdue"] as const)[i % 4]!,
   };
 });
 
@@ -541,25 +541,27 @@ export const approvals: ApprovalRequest[] = Array.from({ length: 16 }, (_, i) =>
     "initiative-change",
     "risk-escalation",
   ] as const;
-  const type = types[i % 6];
-  const project = projects[i % projects.length];
+  const type = types[i % 6]!;
+  const project = projects[i % projects.length]!;
+  const initiative = initiatives[i % initiatives.length]!;
+  const risk = risks[i % risks.length]!;
   const labels: Record<(typeof types)[number], string> = {
     "project-approval": `Approval to baseline ${project.name}`,
     "deliverable-approval": `Deliverable sign-off — ${project.name} solution blueprint`,
     "change-request": `Change request — schedule extension for ${project.name}`,
     "completion-certificate": `Completion certificate — ${project.name} wave 1`,
-    "initiative-change": `Initiative scope change — ${initiatives[i % initiatives.length].name}`,
-    "risk-escalation": `Risk escalation — ${risks[i % risks.length].title}`,
+    "initiative-change": `Initiative scope change — ${initiative.name}`,
+    "risk-escalation": `Risk escalation — ${risk.title}`,
   };
   return {
     id: `APR-${String(i + 1).padStart(3, "0")}`,
     code: `APR-${String(i + 1).padStart(3, "0")}`,
-    title: labels[type],
+    title: labels[type]!,
     type,
     requester: pick(PEOPLE, i + 22),
     submittedAt: `2026-08-${String((i % 27) + 1).padStart(2, "0")}`,
-    amount: type === "change-request" ? between(120, 4800, i + 181) * 1000 : undefined,
-    status: (["submitted", "under-review", "draft", "approved", "rejected", "submitted"] as const)[i % 6],
+    ...(type === "change-request" ? { amount: between(120, 4800, i + 181) * 1000 } : {}),
+    status: (["submitted", "under-review", "draft", "approved", "rejected", "submitted"] as const)[i % 6]!,
     reference: project.code,
     notes: "Reviewed by the programme management office; supporting documentation attached in the governance pack.",
     history: [{ date: `2026-08-${String((i % 27) + 1).padStart(2, "0")}`, actor: pick(PEOPLE, i + 22), action: "Request submitted" }],
@@ -600,21 +602,21 @@ export const users: User[] = PEOPLE.map((name, i) => ({
       "Department Manager",
       "Viewer",
     ] as const
-  )[i % 7],
-  department: DEPARTMENTS[i % DEPARTMENTS.length],
-  sector: SECTORS[i % SECTORS.length],
-  status: (["active", "active", "active", "inactive", "suspended"] as const)[i % 5],
+  )[i % 7]!,
+  department: DEPARTMENTS[i % DEPARTMENTS.length]!,
+  sector: SECTORS[i % SECTORS.length]!,
+  status: (["active", "active", "active", "inactive", "suspended"] as const)[i % 5]!,
   lastLogin: `2026-08-${String(27 - (i % 20)).padStart(2, "0")} 08:${String(10 + i).padStart(2, "0")}`,
 }));
 
 export const orgNodes: OrgNode[] = [
-  { id: "ORG-000", name: "Government Performance Centre", level: "center", head: PEOPLE[0], headcount: 4120, performance: 81 },
+  { id: "ORG-000", name: "Government Performance Centre", level: "center", head: PEOPLE[0]!, headcount: 4120, performance: 81 },
   ...SECTORS.map((s, i) => ({
     id: `ORG-S${i + 1}`,
     name: s,
     level: "sector" as const,
     parentId: "ORG-000",
-    head: PEOPLE[i + 1],
+    head: PEOPLE[i + 1]!,
     headcount: between(300, 1400, i + 191),
     performance: between(62, 93, i + 201),
   })),
@@ -623,7 +625,7 @@ export const orgNodes: OrgNode[] = [
     name: d,
     level: "department" as const,
     parentId: `ORG-S${(i % 5) + 1}`,
-    head: PEOPLE[(i + 3) % PEOPLE.length],
+    head: PEOPLE[(i + 3) % PEOPLE.length]!,
     headcount: between(40, 320, i + 211),
     performance: between(55, 96, i + 221),
   })),
@@ -638,11 +640,11 @@ export const reportHistory: ReportRun[] = Array.from({ length: 12 }, (_, i) => (
     "Risk Exposure Report",
     "Milestone Status Report",
     "Benefits Realisation Report",
-  ][i % 6],
-  category: ["Strategy", "KPI", "Projects", "Risk", "Projects", "Projects"][i % 6],
+  ][i % 6] as string,
+  category: ["Strategy", "KPI", "Projects", "Risk", "Projects", "Projects"][i % 6] as string,
   generatedAt: `2026-${String(8 - Math.floor(i / 2)).padStart(2, "0")}-0${(i % 5) + 1}`,
   period: `${["August", "July", "June", "May", "April", "March"][Math.floor(i / 2)]} 2026`,
-  format: (["PDF", "Excel", "CSV"] as const)[i % 3],
+  format: (["PDF", "Excel", "CSV"] as const)[i % 3]!,
   size: `${between(1, 9, i + 231)}.${between(1, 9, i + 241)} MB`,
   by: pick(PEOPLE, i + 25),
 }));

@@ -117,3 +117,5 @@ export function nextId(prefix: string, existing: { id: string }[]) {
   const n = existing.length + 1;
   return `${prefix}-${String(n).padStart(3, "0")}`;
 }
+
+export * from "./index";

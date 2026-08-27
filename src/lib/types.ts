@@ -177,6 +177,8 @@ export interface ResourceAssignment {
   department: string;
 }
 
+export type RiskStatus = "open" | "mitigating" | "closed" | "escalated";
+
 export interface Risk {
   id: string;
   code: string;
@@ -189,7 +191,7 @@ export interface Risk {
   owner: string;
   mitigation: string;
   dueDate: string;
-  status: "open" | "mitigating" | "closed" | "escalated";
+  status: RiskStatus;
 }
 
 export interface Issue {

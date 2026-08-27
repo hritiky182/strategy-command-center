@@ -126,6 +126,29 @@ export const projectService = {
     getDb().projects.filter((p) => p.portfolioId === portfolioId),
   byInitiative: (initiativeId: string) =>
     getDb().projects.filter((p) => p.initiativeId === initiativeId),
+  create: (data: Omit<Project, "id" | "milestones" | "phases" | "tasks" | "resources" | "documents" | "activity" | "deliverables" | "dependencies">) => {
+    const id = nextId("PRJ", getDb().projects);
+    setDb((d) => ({
+      ...d,
+      projects: [
+        ...d.projects,
+        {
+          ...data,
+          id,
+          code: id,
+          milestones: [],
+          phases: [],
+          tasks: [],
+          resources: [],
+          documents: [],
+          deliverables: [],
+          dependencies: [],
+          activity: [{ date: today(), actor: "You", action: "Project created" }],
+        },
+      ],
+    }));
+    return id;
+  },
   update: (id: string, patch: Partial<Project>) =>
     setDb((d) => ({ ...d, projects: d.projects.map((p) => (p.id === id ? { ...p, ...patch } : p)) })),
   remove: (id: string) => setDb((d) => ({ ...d, projects: d.projects.filter((p) => p.id !== id) })),
@@ -155,6 +178,13 @@ export const riskService = {
   },
   removeIssue: (id: string) =>
     setDb((d) => ({ ...d, issues: d.issues.filter((i) => i.id !== id) })),
+};
+
+export const issueService = {
+  list: () => getDb().issues,
+  create: (data: Omit<Issue, "id" | "code">) => riskService.createIssue(data),
+  update: (id: string, patch: Partial<Issue>) => riskService.updateIssue(id, patch),
+  remove: (id: string) => riskService.removeIssue(id),
 };
 
 export const stakeholderService = {
@@ -199,6 +229,28 @@ export const workflowService = {
     }));
     return id;
   },
+};
+
+export const approvalService = {
+  ...workflowService,
+  approve: (id: string, note: string) => workflowService.transition(id, "approved", note),
+  reject: (id: string, note: string) => workflowService.transition(id, "rejected", note),
+};
+
+export const correctiveActionService = {
+  list: () => getDb().correctiveActions,
+  create: (data: Omit<CorrectiveAction, "id" | "code">) => {
+    const id = nextId("CA", getDb().correctiveActions);
+    setDb((d) => ({ ...d, correctiveActions: [...d.correctiveActions, { ...data, id, code: id }] }));
+    return id;
+  },
+  update: (id: string, patch: Partial<CorrectiveAction>) =>
+    setDb((d) => ({
+      ...d,
+      correctiveActions: d.correctiveActions.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    })),
+  remove: (id: string) =>
+    setDb((d) => ({ ...d, correctiveActions: d.correctiveActions.filter((c) => c.id !== id) })),
 };
 
 export const notificationService = {
